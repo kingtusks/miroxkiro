@@ -2,23 +2,26 @@ import { useEffect, useState } from 'react'
 import './App.css'
 
 const stats = [
-  { value: '1M+', label: 'rent-stabilized units' },
-  { value: '3.2x', label: 'faster violation spotting' },
-  { value: '94%', label: 'tenant issue detection rate' },
+  { value: '1M+', label: 'units monitored' },
+  { value: '3.2x', label: 'faster review' },
+  { value: '94%', label: 'issue detection' },
 ]
 
 const features = [
   {
+    icon: 'fa-solid fa-file-lines',
     title: 'Lease intelligence',
-    text: 'Reads your PDF and extracts rent terms, renewal clauses, and hidden fees in seconds.',
+    text: 'Turns dense lease language into clear, searchable findings in seconds.',
   },
   {
+    icon: 'fa-solid fa-scale-balanced',
     title: 'Legal cross-checking',
-    text: 'Matches your lease against NYC codes, HPD records, and DHCR history for evidence-backed findings.',
+    text: 'Matches terms against housing rules and documentation for stronger evidence.',
   },
   {
+    icon: 'fa-solid fa-envelope-open-text',
     title: 'Demand letter drafting',
-    text: 'Generates a clean, cited letter you can send to your landlord or housing authority.',
+    text: 'Produces polished tenant-ready letters you can send with confidence.',
   },
 ]
 
@@ -102,12 +105,9 @@ function App() {
     setError('')
 
     const payload = {
-      tenant_name:
-        analysis.extracted_terms?.tenant_name || 'Tenant',
-      landlord_name:
-        analysis.extracted_terms?.landlord_name || 'Landlord',
-      address:
-        analysis.extracted_terms?.address || 'Property Address',
+      tenant_name: analysis.extracted_terms?.tenant_name || 'Tenant',
+      landlord_name: analysis.extracted_terms?.landlord_name || 'Landlord',
+      address: analysis.extracted_terms?.address || 'Property Address',
       violations: analysis.violations,
     }
 
@@ -144,7 +144,7 @@ function App() {
           <a href="#about">About</a>
         </nav>
         <a className="nav-cta" href="#demo">
-          Try the demo
+          Start now
         </a>
       </header>
 
@@ -152,21 +152,23 @@ function App() {
         <section className="hero-section">
           <div className="hero-copy">
             <span className="eyebrow">AI tenant protection</span>
-            <h1>Find every violation hiding in your lease.</h1>
+            <h1>Spot lease issues before they become a problem.</h1>
             <p>
-              RentGhost reads your apartment documents, flags landlord abuse,
-              and drafts a legal demand letter grounded in NYC housing law.
+              RentGhost scans your documents, highlights risky clauses, and prepares a
+              demand letter that helps you push back with evidence.
             </p>
             <div className="hero-actions">
               <a className="primary-btn" href="#demo">
                 <i className="fa-solid fa-file-arrow-up" /> Upload lease
               </a>
               <a className="secondary-btn" href="#features">
-                <i className="fa-solid fa-circle-play" /> See how it works
+                <i className="fa-solid fa-circle-play" /> How it works
               </a>
             </div>
             <div className="hero-footnote">
-              <span>{backendReady ? 'Backend connected' : 'Backend offline'}</span>
+              <span className={backendReady ? 'status-live' : 'status-offline'}>
+                {backendReady ? 'Live backend' : 'Backend offline'}
+              </span>
               <div className="mini-dots">
                 <span />
                 <span />
@@ -176,31 +178,37 @@ function App() {
           </div>
 
           <div className="hero-visual">
-            <div className="glow glow-one" />
-            <div className="glow glow-two" />
-            <div className="visual-panel">
-              <div className="panel-header">
-                <span className="panel-dot" />
-                <span className="panel-dot" />
-                <span className="panel-dot" />
+            <div className="hero-card-shell">
+              <div className="hero-card-top">
+                <span className="glass-dot" />
+                <span className="glass-dot" />
+                <span className="glass-dot" />
               </div>
-              <div className="panel-card main-panel">
-                <div className="panel-label">Lease scan</div>
-                <div className="scan-ring">
-                  <div className="scan-core">98%</div>
+              <div className="hero-card-body">
+                <div className="report-pill">Lease review</div>
+                <div className="hero-ring-wrap">
+                  <div className="hero-ring">
+                    <div className="hero-ring-inner">98%</div>
+                  </div>
                 </div>
-                <div className="scan-meta">
-                  <span>Detected</span>
-                  <strong>{analysis?.violations?.length || 3} violations</strong>
+                <div className="hero-metrics">
+                  <div>
+                    <span>Detected</span>
+                    <strong>{analysis?.violations?.length || 3} violations</strong>
+                  </div>
+                  <div>
+                    <span>Risk</span>
+                    <strong>High priority</strong>
+                  </div>
                 </div>
               </div>
-              <div className="panel-card floating-card one">
+              <div className="floating-note note-one">
                 <span>Rent increase</span>
                 <strong>{analysis?.extracted_terms?.rent_amount || '+18.7%'}</strong>
               </div>
-              <div className="panel-card floating-card two">
-                <span>Lead disclosure</span>
-                <strong>{analysis?.missing_disclosures?.length ? 'Review' : 'Missing'}</strong>
+              <div className="floating-note note-two">
+                <span>Lead notice</span>
+                <strong>{analysis?.missing_disclosures?.length ? 'Review needed' : 'Missing'}</strong>
               </div>
             </div>
           </div>
@@ -218,12 +226,14 @@ function App() {
         <section className="features-section" id="features">
           <div className="section-heading">
             <span className="eyebrow">Why it works</span>
-            <h2>From lease upload to legal action in one flow.</h2>
+            <h2>A cleaner path from paperwork to evidence.</h2>
           </div>
           <div className="feature-grid">
             {features.map((feature) => (
               <article key={feature.title} className="feature-card">
-                <div className="feature-icon">✦</div>
+                <div className="feature-icon">
+                  <i className={feature.icon} />
+                </div>
                 <h3>{feature.title}</h3>
                 <p>{feature.text}</p>
               </article>
@@ -239,15 +249,16 @@ function App() {
             </div>
 
             <div className="upload-panel">
+              <label htmlFor="lease-upload" className="upload-button">
+                <i className="fa-solid fa-cloud-arrow-up" />
+                <span>{selectedFile ? selectedFile.name : 'Choose PDF lease'}</span>
+              </label>
               <input
                 id="lease-upload"
                 type="file"
                 accept=".pdf"
                 onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
               />
-              <label htmlFor="lease-upload" className="upload-button">
-                {selectedFile ? selectedFile.name : 'Choose PDF lease'}
-              </label>
               <button
                 className="primary-btn upload-submit"
                 onClick={handleAnalyze}
@@ -288,11 +299,9 @@ function App() {
                 <span>Violation report</span>
                 <span className="pill">{analysis ? 'Ready' : 'Pending'}</span>
               </div>
-              <h3>
-                {analysis?.summary || 'Lease review complete'}
-              </h3>
+              <h3>{analysis?.summary || 'Lease review complete'}</h3>
               <div className="report-meter">
-                <div className="meter-fill" />
+                <div className="meter-fill" style={{ width: analysis ? '82%' : '58%' }} />
               </div>
               <ul>
                 <li>{analysis?.extracted_terms?.address || 'Address will appear here'}</li>
@@ -334,7 +343,8 @@ function App() {
             <h2>Protecting renters from predatory housing practices.</h2>
           </div>
           <p>
-            We built RentGhost to turn confusing paperwork into clear, actionable evidence so tenants can push back with confidence.
+            We built RentGhost to turn confusing paperwork into clear, actionable evidence so
+            tenants can push back with confidence.
           </p>
         </section>
       </main>
