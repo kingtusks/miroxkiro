@@ -1,1 +1,7 @@
-fastapi[standard]
+fastapi
+python-multipart
+anthropic
+pypdf2
+httpx
+python-dotenv
+pydantic
