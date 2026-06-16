@@ -1,6 +1,8 @@
 fastapi
+uvicorn
 python-multipart
-anthropic
+langchain
+langchain-anthropic
 pypdf2
 httpx
 python-dotenv

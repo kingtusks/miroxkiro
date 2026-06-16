@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from app.services.pdf_parser import extract_text_from_pdf
 from app.services.agent import analyze_lease
-from app.models import LeaseAnalysisResponse
+from app.models import LeaseAnalysisResponse, LeaseTextRequest
 
 router = APIRouter()
 
@@ -15,8 +15,8 @@ async def analyze_lease_upload(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Please upload a PDF file.")
 
     contents = await file.read()
-    if len(contents) > 10 * 1024 * 1024:  # 10MB limit
-        raise HTTPException(status_code=400, detail="File too large. Max 10MB.")
+    if len(contents) > 50 * 1024 * 1024:  # 50MB limit
+        raise HTTPException(status_code=400, detail="File too large. Max 50MB.")
 
     # Extract text from PDF
     lease_text = extract_text_from_pdf(contents)
@@ -32,11 +32,11 @@ async def analyze_lease_upload(file: UploadFile = File(...)):
 
 
 @router.post("/analyze-text", response_model=LeaseAnalysisResponse)
-async def analyze_lease_text(body: dict):
+async def analyze_lease_text(body: LeaseTextRequest):
     """
     Submit raw lease text for analysis (useful for testing without PDF).
     """
-    lease_text = body.get("text", "")
+    lease_text = body.text
     if not lease_text.strip():
         raise HTTPException(status_code=400, detail="No lease text provided.")
 

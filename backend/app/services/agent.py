@@ -1,7 +1,13 @@
-import anthropic
+from langchain_anthropic import ChatAnthropic
+from langchain_core.messages import SystemMessage, HumanMessage
 from app.config import CLAUDE_API_KEY
+import json
 
-client = anthropic.Anthropic(api_key=CLAUDE_API_KEY)
+llm = ChatAnthropic(
+    model="claude-sonnet-4-6",
+    api_key=CLAUDE_API_KEY,
+    max_tokens=8192,
+)
 
 SYSTEM_PROMPT = """You are RentGhost, an expert AI tenant rights advocate specializing in New York City rent stabilization law.
 
@@ -27,19 +33,25 @@ Always cite specific NYC Admin Code sections, RSC sections, or RPL sections when
 Be thorough but clear — the tenant may not have legal training."""
 
 
+LETTER_SYSTEM_PROMPT = """You are RentGhost, drafting formal tenant demand letters. 
+Write professional, legally-grounded demand letters that cite specific NYC laws.
+The tone should be firm but professional. Include:
+- Proper formatting with date, addresses
+- Clear statement of violations with legal citations
+- Specific demands (cure violations, refund overcharges, etc.)
+- Deadline for response (typically 30 days)
+- Statement that failure to comply may result in filing with DHCR or court action
+- Signature line for tenant"""
+
+
 async def analyze_lease(lease_text: str) -> dict:
     """
-    Send lease text to Claude for analysis.
+    Send lease text to Claude via LangChain for analysis.
     Returns structured violation findings.
     """
-    message = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=4096,
-        system=SYSTEM_PROMPT,
-        messages=[
-            {
-                "role": "user",
-                "content": f"""Analyze the following NYC lease document. 
+    messages = [
+        SystemMessage(content=SYSTEM_PROMPT),
+        HumanMessage(content=f"""Analyze the following NYC lease document. 
 
 Respond in this JSON structure:
 {{
@@ -74,22 +86,22 @@ Respond in this JSON structure:
 }}
 
 LEASE DOCUMENT:
-{lease_text}""",
-            }
-        ],
-    )
-    
-    # Extract the text response
-    response_text = message.content[0].text
-    
+{lease_text}"""),
+    ]
+
+    response = await llm.ainvoke(messages)
+    response_text = response.content
+
     # Try to parse as JSON, fall back to raw text
-    import json
     try:
-        # Handle case where Claude wraps JSON in markdown code blocks
         cleaned = response_text.strip()
+        # Strip markdown code fences if present
         if cleaned.startswith("```"):
-            cleaned = cleaned.split("\n", 1)[1]
-            cleaned = cleaned.rsplit("```", 1)[0]
+            # Remove opening fence (```json or ```)
+            cleaned = cleaned.split("\n", 1)[1] if "\n" in cleaned else cleaned[3:]
+        if cleaned.endswith("```"):
+            cleaned = cleaned[:-3]
+        cleaned = cleaned.strip()
         return json.loads(cleaned)
     except json.JSONDecodeError:
         return {"raw_analysis": response_text}
@@ -109,22 +121,9 @@ async def generate_demand_letter(
         for v in violations
     )
 
-    message = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=3000,
-        system="""You are RentGhost, drafting formal tenant demand letters. 
-Write professional, legally-grounded demand letters that cite specific NYC laws.
-The tone should be firm but professional. Include:
-- Proper formatting with date, addresses
-- Clear statement of violations with legal citations
-- Specific demands (cure violations, refund overcharges, etc.)
-- Deadline for response (typically 30 days)
-- Statement that failure to comply may result in filing with DHCR or court action
-- Signature line for tenant""",
-        messages=[
-            {
-                "role": "user",
-                "content": f"""Draft a demand letter with these details:
+    messages = [
+        SystemMessage(content=LETTER_SYSTEM_PROMPT),
+        HumanMessage(content=f"""Draft a demand letter with these details:
 
 Tenant: {tenant_name}
 Landlord: {landlord_name}
@@ -133,9 +132,8 @@ Property Address: {address}
 Violations found:
 {violations_text}
 
-Generate a complete, ready-to-send demand letter.""",
-            }
-        ],
-    )
+Generate a complete, ready-to-send demand letter."""),
+    ]
 
-    return message.content[0].text
+    response = await llm.ainvoke(messages)
+    return response.content

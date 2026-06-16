@@ -2,6 +2,10 @@ from pydantic import BaseModel
 from typing import Optional
 
 
+class LeaseTextRequest(BaseModel):
+    text: str
+
+
 class LeaseAnalysisResponse(BaseModel):
     extracted_terms: Optional[dict] = None
     violations: Optional[list[dict]] = None
